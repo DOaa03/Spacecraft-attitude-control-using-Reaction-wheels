@@ -1,7 +1,3 @@
-% this script simulate the control of a spacecraft attitude using three orthogonal
-% reaction wheels and Lyapunove-based control law
-%the script is scenario C which simulatess the mode of orbit-following 
-
 clear; clc; 
 
 %% ===================== ORBIT PROPAGATION ===================== %%
@@ -29,7 +25,6 @@ q = [1; 0; 0; 0];              % Initial quaternion (scalar first)
 omega = [0; 0; 0];             % Initial body rate
 Omega = [0; 0; 0];             % Initial wheel speed
 
-% **تصحيح الكسب:** قيم أقل بكثير لتحقيق الاستقرار
 Kp = 0.5;                      % Proportional gain (كان 5.0)
 Kd = 5.0;                      % Derivative gain (كان 10.0)
 
@@ -62,7 +57,7 @@ q_ref_final(1,:) = q_ref ;
 q_err_final(1,:) = [0.5,-0.5,-0.5,-0.5] ;
 
 %% ===================== MAIN SIMULATION LOOP ===================== %%
-i = 1; % مؤشر الخطوة الزمنية الثابتة
+i = 1; 
 for k = 1:N-1 
     
   
@@ -90,14 +85,12 @@ for k = 1:N-1
         % tau_controller = cross(omega, J*omega) - Kp * q_err(2:4) - Kd * omega_error; (النسخة القديمة)
         tau_controller = skew(omega)*J*omega  - Kp * q_err(2:4) - Kd * omega_error;
         
-        % 4. تقييد العزم
+        % 4.
         tau_controller = min(max(tau_controller, -max_torque), max_torque);
         
-        % 5. علاقات العزم (التصحيح):
-        % العزم على العجلة (لغرض ديناميكيات العجلة):
+        % 5.
         tau_RW = pinv(S) * (-tau_controller)
         
-        % عزم رد الفعل على الجسم:
         tau_body = tau_controller;
         
         % 6. Wheel dynamics
@@ -107,9 +100,9 @@ for k = 1:N-1
         % 7. Wheel angular momentum
         H_w = S * (I .* Omega);
         
-        % 8. Body dynamics (التصحيح: استخدام tau_body كعزم خارجي من العجلات)
+        % 8. Body dynamics 
         IwOmegadot = S * (I .* Omega_dot);
-        % معادلة ديناميكيات الجسم الكاملة: J*omega_dot = tau_body - cross(omega, J*omega + H_w) - IwOmegadot
+        %J*omega_dot = tau_body - cross(omega, J*omega + H_w) - IwOmegadot
         omega_dot = invJ * (tau_body - cross(omega, J*omega + H_w) - IwOmegadot);
         
         omega = omega + omega_dot * dt_fixed;
@@ -136,7 +129,6 @@ for k = 1:N-1
     end
 end
 
-% قص النتائج المخزنة
 q_final = q_final(1:i-1,:);
 q_ref_final = q_ref_final(1:i-1,:);
 q_err_final = q_err_final(1:i-1,:);
@@ -147,7 +139,6 @@ H_w_final = H_w_final(1:i-1,:);
 t_attitude = t_attitude(1:i-1);
 
 %% ===================== PLOTS ===================== %%
-% ... (لا حاجة لتكرار أقسام الرسم، استخدمي الأقسام الموجودة في الكود السابق)
 
 % current orientation and the refrence orientation
 figure('Color','w');
@@ -254,3 +245,4 @@ S = [  0    -v(3)   v(2);
       v(3)    0    -v(1);
      -v(2)   v(1)    0  ];
 end
+
